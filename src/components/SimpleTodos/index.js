@@ -1,4 +1,5 @@
 import {Component} from 'react'
+import {v4 as uuid} from 'uuid'
 import TodoItem from '../TodoItem'
 
 const initialTodosList = [
@@ -38,7 +39,7 @@ const initialTodosList = [
 
 // Write your code here
 class SimpleTodos extends Component {
-  state = {todoList: initialTodosList}
+  state = {todoList: initialTodosList, inputText: ''}
 
   deleteItem = id => {
     const {todoList} = this.state
@@ -46,11 +47,56 @@ class SimpleTodos extends Component {
     this.setState({todoList: updateList})
   }
 
-  render() {
+  changeInput = e => {
+    this.setState({inputText: e.target.value})
+  }
+
+  addItem = () => {
+    const {inputText} = this.state
+    let i = inputText.length - 1
+    let numberPart = ''
+
+    while (i >= 0 && inputText[i] >= '0' && inputText[i] <= '9') {
+      numberPart = inputText[i] + numberPart
+      i -= 1
+    }
+
+    const title = inputText.slice(0, i + 1).trim()
+
+    if (numberPart.length > 0) {
+      const count = parseInt(numberPart)
+
+      const ans = []
+      for (let j = 0; j < count; j += 1) ans.push({id: uuid(), title})
+      this.setState(prev => ({
+        todoList: [...prev.todoList, ...ans],
+        inputText: '',
+      }))
+    } else {
+      this.setState(prev => ({
+        todoList: [...prev.todoList, {id: uuid(), title: inputText}],
+        inputText: '',
+      }))
+    }
+  }
+
+  editTitle = (id, title) => {
     const {todoList} = this.state
+    const updatedList = todoList.filter(i => i.id !== id)
+    this.setState({
+      todoList: [...updatedList, {id, title}],
+    })
+  }
+
+  render() {
+    const {todoList, inputText} = this.state
     return (
       <div>
         <h1>Simple Todos</h1>
+        <input value={inputText} onChange={this.changeInput} type="text" />
+        <button onClick={this.addItem} type="button">
+          Add
+        </button>
         <ul>
           {todoList.map(item => (
             <TodoItem
@@ -58,6 +104,7 @@ class SimpleTodos extends Component {
               uniqueId={item.id}
               title={item.title}
               key={item.id}
+              editFun={this.editTitle}
             />
           ))}
         </ul>
